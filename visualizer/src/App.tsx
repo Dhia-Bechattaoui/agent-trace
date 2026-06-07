@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { TraceEvent } from './types/schema';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 function App() {
   const [events, setEvents] = useState<TraceEvent[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
 
   useEffect(() => {
-    // Fetch mock data from public folder
     fetch('/test_run.jsonl')
       .then(res => res.text())
       .then(text => {
@@ -21,7 +22,6 @@ function App() {
 
   return (
     <div className="flex h-screen bg-gray-900 text-white font-sans overflow-hidden">
-      {/* Sidebar for runs */}
       <aside className="w-64 bg-gray-800 border-r border-gray-700 flex flex-col">
         <div className="p-4 border-b border-gray-700">
           <h1 className="text-xl font-bold text-blue-400">AgentTrace</h1>
@@ -37,9 +37,7 @@ function App() {
         </div>
       </aside>
 
-      {/* Main Content Area */}
       <main className="flex-1 flex flex-col">
-        {/* Timeline Scrubber */}
         <header className="h-20 border-b border-gray-700 bg-gray-800 flex flex-col justify-center px-6">
           <div className="flex justify-between items-center mb-2">
              <span className="text-sm font-medium">Timeline Scrubber</span>
@@ -55,10 +53,8 @@ function App() {
           />
         </header>
 
-        {/* Split View */}
         {currentEvent ? (
           <div className="flex-1 flex overflow-hidden">
-            {/* Left Panel: Environment State */}
             <div className="flex-1 border-r border-gray-700 p-4 bg-gray-950 overflow-y-auto relative">
                <div className="absolute top-2 left-2 bg-gray-800 text-xs px-2 py-1 rounded text-gray-400 border border-gray-600 z-10">Environment State: {currentEvent.type}</div>
                
@@ -69,7 +65,6 @@ function App() {
                )}
 
                <div className="mt-4 bg-white rounded overflow-hidden h-[500px]">
-                  {/* If we have a domSnapshot, render it safely in an iframe */}
                   {currentEvent.state?.domSnapshot ? (
                      <iframe 
                        srcDoc={currentEvent.state.domSnapshot} 
@@ -83,7 +78,6 @@ function App() {
                </div>
             </div>
 
-            {/* Right Panel: AI State */}
             <div className="flex-1 p-4 bg-gray-900 overflow-y-auto relative">
                <div className="absolute top-2 left-2 bg-gray-800 text-xs px-2 py-1 rounded text-gray-400 border border-gray-600">AI State</div>
                
@@ -92,22 +86,28 @@ function App() {
                     <>
                       <div>
                         <h3 className="font-semibold text-blue-400 text-xs uppercase tracking-wider mb-2">System Prompt</h3>
-                        <div className="bg-gray-800 border border-gray-700 p-3 rounded text-gray-300 font-mono text-xs whitespace-pre-wrap">
-                          {currentEvent.llmInteraction.systemPrompt}
+                        <div className="border border-gray-700 rounded overflow-hidden">
+                          <SyntaxHighlighter language="markdown" style={vscDarkPlus} customStyle={{ margin: 0, fontSize: '0.75rem', background: '#1f2937' }}>
+                            {currentEvent.llmInteraction.systemPrompt}
+                          </SyntaxHighlighter>
                         </div>
                       </div>
 
                       <div>
                         <h3 className="font-semibold text-green-400 text-xs uppercase tracking-wider mb-2">User Prompt</h3>
-                        <div className="bg-gray-800 border border-gray-700 p-3 rounded text-gray-300 font-mono text-xs whitespace-pre-wrap">
-                          {currentEvent.llmInteraction.userPrompt}
+                        <div className="border border-gray-700 rounded overflow-hidden">
+                          <SyntaxHighlighter language="markdown" style={vscDarkPlus} customStyle={{ margin: 0, fontSize: '0.75rem', background: '#1f2937' }}>
+                            {currentEvent.llmInteraction.userPrompt}
+                          </SyntaxHighlighter>
                         </div>
                       </div>
 
                       <div>
                         <h3 className="font-semibold text-purple-400 text-xs uppercase tracking-wider mb-2">Response</h3>
-                        <div className="bg-gray-800 border border-gray-700 p-3 rounded text-gray-300 font-mono text-xs whitespace-pre-wrap">
-                          {currentEvent.llmInteraction.response}
+                        <div className="border border-gray-700 rounded overflow-hidden">
+                          <SyntaxHighlighter language="markdown" style={vscDarkPlus} customStyle={{ margin: 0, fontSize: '0.75rem', background: '#1f2937' }}>
+                            {currentEvent.llmInteraction.response}
+                          </SyntaxHighlighter>
                         </div>
                       </div>
                     </>
@@ -118,8 +118,10 @@ function App() {
                   {currentEvent.toolCalls && currentEvent.toolCalls.length > 0 && (
                     <div>
                       <h3 className="font-semibold text-orange-400 text-xs uppercase tracking-wider mb-2">Tool Calls</h3>
-                      <div className="bg-gray-800 border border-gray-700 p-3 rounded text-gray-300 font-mono text-xs overflow-x-auto whitespace-pre">
-                        {JSON.stringify(currentEvent.toolCalls, null, 2)}
+                      <div className="border border-gray-700 rounded overflow-hidden">
+                        <SyntaxHighlighter language="json" style={vscDarkPlus} customStyle={{ margin: 0, fontSize: '0.75rem', background: '#1f2937' }}>
+                          {JSON.stringify(currentEvent.toolCalls, null, 2)}
+                        </SyntaxHighlighter>
                       </div>
                     </div>
                   )}

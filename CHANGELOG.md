@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-06-07
+### Added
+- Syntax highlighting (`react-syntax-highlighter`) for the AI State panel to beautifully format JSON tool calls and Markdown prompts.
+- Comprehensive `README.md` documentation covering SDK installation, usage, and Dashboard instructions.
+- MVP officially completed!
+
 ## [0.4.0] - 2026-06-07
 ### Added
 - Initial release of the `@agent-trace/sdk` TypeScript package (`packages/sdk-ts`).
@@ -35,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Basic `.agents` configuration folders.
 - `PLAN.md`, `README.md`, and `CHANGELOG.md`.
 
+[1.0.0]: https://github.com/dhia/agent-trace/compare/v0.4.0...v1.0.0
 [0.4.0]: https://github.com/dhia/agent-trace/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/dhia/agent-trace/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/dhia/agent-trace/compare/v0.1.0...v0.2.0
