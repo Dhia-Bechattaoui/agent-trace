@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { TraceEvent } from './types/schema';
+import type { TraceEvent } from './types/schema';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
