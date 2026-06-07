@@ -1,6 +1,24 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { TraceEvent } from './types/schema';
 
 function App() {
+  const [events, setEvents] = useState<TraceEvent[]>([]);
+  const [currentStep, setCurrentStep] = useState(0);
+
+  useEffect(() => {
+    // Fetch mock data from public folder
+    fetch('/test_run.jsonl')
+      .then(res => res.text())
+      .then(text => {
+        const lines = text.trim().split('\n');
+        const parsedEvents = lines.map(line => JSON.parse(line) as TraceEvent);
+        setEvents(parsedEvents);
+      })
+      .catch(err => console.error("Failed to load trace", err));
+  }, []);
+
+  const currentEvent = events[currentStep];
+
   return (
     <div className="flex h-screen bg-gray-900 text-white font-sans overflow-hidden">
       {/* Sidebar for runs */}
@@ -12,8 +30,8 @@ function App() {
           <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Recent Runs</h2>
           <ul className="space-y-2">
             <li className="p-2 bg-gray-700 rounded-md cursor-pointer hover:bg-gray-600 transition-colors">
-              <div className="text-sm font-medium">run-123456789</div>
-              <div className="text-xs text-gray-400">3 steps</div>
+              <div className="text-sm font-medium">test_run.jsonl</div>
+              <div className="text-xs text-gray-400">{events.length} steps</div>
             </li>
           </ul>
         </div>
@@ -21,57 +39,98 @@ function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col">
-        {/* Header/Scrubber Area Placeholder */}
-        <header className="h-16 border-b border-gray-700 bg-gray-800 flex items-center px-6">
-          <div className="text-sm text-gray-300">Timeline Scrubber will go here</div>
+        {/* Timeline Scrubber */}
+        <header className="h-20 border-b border-gray-700 bg-gray-800 flex flex-col justify-center px-6">
+          <div className="flex justify-between items-center mb-2">
+             <span className="text-sm font-medium">Timeline Scrubber</span>
+             <span className="text-xs text-gray-400">Step {currentStep + 1} of {events.length}</span>
+          </div>
+          <input 
+            type="range" 
+            min={0} 
+            max={Math.max(0, events.length - 1)} 
+            value={currentStep}
+            onChange={(e) => setCurrentStep(parseInt(e.target.value))}
+            className="w-full accent-blue-500"
+          />
         </header>
 
         {/* Split View */}
-        <div className="flex-1 flex overflow-hidden">
-          {/* Left Panel: Environment State */}
-          <div className="flex-1 border-r border-gray-700 p-4 bg-gray-950 overflow-y-auto relative">
-             <div className="absolute top-2 left-2 bg-gray-800 text-xs px-2 py-1 rounded text-gray-400 border border-gray-600">Environment State</div>
-             <div className="mt-12 flex items-center justify-center h-full border-2 border-dashed border-gray-800 rounded-lg">
-                <span className="text-gray-600">DOM/Screenshot View</span>
-             </div>
+        {currentEvent ? (
+          <div className="flex-1 flex overflow-hidden">
+            {/* Left Panel: Environment State */}
+            <div className="flex-1 border-r border-gray-700 p-4 bg-gray-950 overflow-y-auto relative">
+               <div className="absolute top-2 left-2 bg-gray-800 text-xs px-2 py-1 rounded text-gray-400 border border-gray-600 z-10">Environment State: {currentEvent.type}</div>
+               
+               {currentEvent.state?.url && (
+                 <div className="mb-4 mt-8 bg-gray-800 p-2 rounded text-xs text-gray-300 font-mono">
+                   URL: {currentEvent.state.url}
+                 </div>
+               )}
+
+               <div className="mt-4 bg-white rounded overflow-hidden h-[500px]">
+                  {/* If we have a domSnapshot, render it safely in an iframe */}
+                  {currentEvent.state?.domSnapshot ? (
+                     <iframe 
+                       srcDoc={currentEvent.state.domSnapshot} 
+                       className="w-full h-full bg-white border-none" 
+                       title="dom-snapshot"
+                       sandbox="allow-same-origin"
+                     />
+                  ) : (
+                     <div className="flex items-center justify-center h-full text-gray-400">No DOM Snapshot</div>
+                  )}
+               </div>
+            </div>
+
+            {/* Right Panel: AI State */}
+            <div className="flex-1 p-4 bg-gray-900 overflow-y-auto relative">
+               <div className="absolute top-2 left-2 bg-gray-800 text-xs px-2 py-1 rounded text-gray-400 border border-gray-600">AI State</div>
+               
+               <div className="mt-10 space-y-6">
+                  {currentEvent.llmInteraction ? (
+                    <>
+                      <div>
+                        <h3 className="font-semibold text-blue-400 text-xs uppercase tracking-wider mb-2">System Prompt</h3>
+                        <div className="bg-gray-800 border border-gray-700 p-3 rounded text-gray-300 font-mono text-xs whitespace-pre-wrap">
+                          {currentEvent.llmInteraction.systemPrompt}
+                        </div>
+                      </div>
+
+                      <div>
+                        <h3 className="font-semibold text-green-400 text-xs uppercase tracking-wider mb-2">User Prompt</h3>
+                        <div className="bg-gray-800 border border-gray-700 p-3 rounded text-gray-300 font-mono text-xs whitespace-pre-wrap">
+                          {currentEvent.llmInteraction.userPrompt}
+                        </div>
+                      </div>
+
+                      <div>
+                        <h3 className="font-semibold text-purple-400 text-xs uppercase tracking-wider mb-2">Response</h3>
+                        <div className="bg-gray-800 border border-gray-700 p-3 rounded text-gray-300 font-mono text-xs whitespace-pre-wrap">
+                          {currentEvent.llmInteraction.response}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-gray-500 italic text-sm">No LLM Interaction recorded for this step.</div>
+                  )}
+
+                  {currentEvent.toolCalls && currentEvent.toolCalls.length > 0 && (
+                    <div>
+                      <h3 className="font-semibold text-orange-400 text-xs uppercase tracking-wider mb-2">Tool Calls</h3>
+                      <div className="bg-gray-800 border border-gray-700 p-3 rounded text-gray-300 font-mono text-xs overflow-x-auto whitespace-pre">
+                        {JSON.stringify(currentEvent.toolCalls, null, 2)}
+                      </div>
+                    </div>
+                  )}
+               </div>
+            </div>
           </div>
-
-          {/* Right Panel: AI State */}
-          <div className="flex-1 p-4 bg-gray-900 overflow-y-auto relative">
-             <div className="absolute top-2 left-2 bg-gray-800 text-xs px-2 py-1 rounded text-gray-400 border border-gray-600">AI State</div>
-             
-             <div className="mt-10 space-y-6">
-                <div>
-                  <h3 className="font-semibold text-blue-400 text-xs uppercase tracking-wider mb-2">Prompt</h3>
-                  <div className="bg-gray-800 border border-gray-700 p-3 rounded text-gray-300 font-mono text-xs whitespace-pre-wrap">
-                    You are a web automation agent.
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold text-green-400 text-xs uppercase tracking-wider mb-2">Response</h3>
-                  <div className="bg-gray-800 border border-gray-700 p-3 rounded text-gray-300 font-mono text-xs whitespace-pre-wrap">
-                    I will fill the username field.
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold text-purple-400 text-xs uppercase tracking-wider mb-2">Tool Calls</h3>
-                  <div className="bg-gray-800 border border-gray-700 p-3 rounded text-gray-300 font-mono text-xs overflow-x-auto">
-                    {`[
-  {
-    "name": "fill_input",
-    "arguments": {
-      "selector": "input[name='user']",
-      "value": "admin"
-    }
-  }
-]`}
-                  </div>
-                </div>
-             </div>
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-gray-500">
+            Loading trace data...
           </div>
-        </div>
+        )}
       </main>
     </div>
   );
